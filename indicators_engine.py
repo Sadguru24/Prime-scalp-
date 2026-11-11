@@ -157,15 +157,21 @@ def kama(
     if fast >= slow:
         raise ProductionDataError("kama_fast_must_be_less_than_slow")
     data = _validate_series(closes, "kama", period + 1)
-    change = abs(data[-1] - data[-1 - period])
-    volatility = sum(abs(data[i] - data[i - 1]) for i in range(len(data) - period, len(data)))
-    efficiency_ratio = change / volatility if volatility > 0 else 0.0
     fast_sc = 2.0 / (fast + 1.0)
     slow_sc = 2.0 / (slow + 1.0)
-    smoothing = (efficiency_ratio * (fast_sc - slow_sc) + slow_sc) ** 2
-    value = data[-period - 1]
-    for price in data[-period:]:
-        value += smoothing * (price - value)
+
+    # Seed with the first-period simple average, then update the efficiency
+    # ratio and smoothing constant independently for every subsequent bar.
+    value = sum(data[:period]) / period
+    for index in range(period, len(data)):
+        change = abs(data[index] - data[index - period])
+        volatility = sum(
+            abs(data[j] - data[j - 1])
+            for j in range(index - period + 1, index + 1)
+        )
+        efficiency_ratio = change / volatility if volatility > 0 else 0.0
+        smoothing = (efficiency_ratio * (fast_sc - slow_sc) + slow_sc) ** 2
+        value += smoothing * (data[index] - value)
     return value
 
 
@@ -239,7 +245,7 @@ def dmi_adx(
     fabricating an ADX/DI reading.
     """
     _positive_period(period, "adx_period")
-    h, low, c = _validate_ohlc(highs, lows, closes, 2 * period + 1)
+    h, low, c = _validate_ohlc(highs, lows, closes, 2 * period)
     tr = _true_ranges(h, low, c)
     plus_dm = [0.0]
     minus_dm = [0.0]
