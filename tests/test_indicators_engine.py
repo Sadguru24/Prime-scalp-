@@ -107,7 +107,7 @@ def test_atr_wilder_series_and_length_validation():
 
 def test_adx_requires_history_and_never_returns_fabricated_fallback():
     with pytest.raises(ProductionDataError):
-        dmi_adx([11.0] * 10, [9.0] * 10, [10.0] * 10, period=5)
+        dmi_adx([11.0] * 9, [9.0] * 9, [10.0] * 9, period=5)
     flat = dmi_adx([11.0] * 10, [9.0] * 10, [10.0] * 10, period=5)
     assert flat == pytest.approx((0.0, 0.0, 0.0))
 
@@ -136,6 +136,7 @@ def test_smc_detects_fvg_and_returns_rolling_extrema():
     highs[-3] = 10.0
     lows[-1] = 11.0
     highs[-1] = 12.0
+    closes[-1] = 11.5
     result = smc_fvg_and_blocks(highs, lows, closes, lookback=20)
     assert result[0] is True
     assert result[2] == pytest.approx(9.0)
