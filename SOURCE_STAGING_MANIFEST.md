@@ -1,13 +1,10 @@
-# Source ZIP staging manifest
+# Prime Scalp source ZIP — staging manifest
 
-This manifest records the initial intake review of the supplied Prime-Scalp-Hub ZIP.
+The supplied source ZIP contains 48 root Python modules. 46 pass Python AST parsing; two are quarantined for syntax errors.
 
-## Candidate source inventory
-The review bundle contains 46 syntax-parseable root Python modules plus the root deployment/configuration files. The two broken strategy files are kept out of the executable candidate set.
-
-Candidate root Python modules:
+## Candidate modules reviewed
 - brokers.py
-- config.py (do not overwrite the existing Integration Branch config.py without a deliberate compatibility review)
+- config.py (existing branch file: compare, do not overwrite blindly)
 - core.py
 - engine.py
 - main.py
@@ -36,6 +33,8 @@ Candidate root Python modules:
 - strategy_microstructure.py
 - strategy_parabolic_sar.py
 - strategy_rate_of_change.py
+- strategy_regime.py (existing branch implementation; preserve after diff)
+- strategy_registry.py (blocked by package import and quarantined dependencies)
 - strategy_rsi_divergence_scalp.py
 - strategy_smc.py
 - strategy_super_trend_rsi_filter.py
@@ -51,27 +50,13 @@ Candidate root Python modules:
 - volatility_indicators.py
 - volume_indicators.py
 
-Additional root files in the candidate review bundle:
-- Dockerfile
-- docker-compose.yml
-- requirements.txt
+Additional root files: Dockerfile, docker-compose.yml, requirements.txt.
 
-## Existing Integration Branch files that need comparison, not blind overwrite
-- config.py
-- strategy_regime.py
-- .github/workflows/quality.yml
-- README.md
-- indicators_engine.py
-- prime_scalp_strategy_suite.py
-- existing tests under tests/
+## Existing Integration Branch files requiring comparison
+config.py, strategy_regime.py, .github/workflows/quality.yml, README.md, indicators_engine.py, prime_scalp_strategy_suite.py, and existing tests.
 
-## Quarantined
-- strategy_options_hedge.py — syntax error at line 41.
-- strategy_swing_brahmastra.py — syntax error at line 45.
+## Quarantined syntax failures
+- strategy_options_hedge.py — malformed f-string at line 41.
+- strategy_swing_brahmastra.py — malformed f-string at line 45.
 
-## Not staged as executable source
-- .pytest_cache/, __pycache__/, *.pyc, runtime logs.
-- No generated cache or bytecode should be committed.
-
-## Important
-This manifest is an intake record, not a claim that all listed modules have been committed or certified. Initial import/functional/security review remains incomplete. Do not deploy based on this manifest.
+Generated cache/bytecode/runtime logs are excluded. This is an intake inventory only; no listed module is certified production-ready.
