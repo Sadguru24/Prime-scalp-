@@ -25,58 +25,26 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
       - name: Install test dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install "pydantic>=2.0" "python-dotenv>=1.0" "pytest>=8.0"
-
-      - name: Verify critical strategy modules are present
-        shell: bash
-        run: |
-          missing=0
-          for file in strategy_regime.py strategy_swing_brahmastra.py strategy_options_hedge.py; do
-            if [[ ! -f "$file" ]]; then
-              echo "::error file=$file::Required strategy source file is missing from this branch"
-              missing=1
-            else
-              echo "Found $file"
-            fi
-          done
-          if [[ "$missing" -ne 0 ]]; then
-            echo "The three audited source files must be committed before their syntax and behavior can be tested."
-            exit 1
-          fi
-
+      - name: Verify unified strategy suite is present
+        run: test -s prime_scalp_strategy_suite.py
       - name: Compile all Python source and tests
         run: |
           python - <<'PY'
           from pathlib import Path
           import py_compile
-          import sys
-
-          excluded = {".git", ".venv", "venv", "__pycache__"}
-          files = [
-              path for path in Path(".").rglob("*.py")
-              if not any(part in excluded for part in path.parts)
-          ]
-          failures = []
+          files = [p for p in Path(".").rglob("*.py")
+                   if not set(p.parts) & {".git", ".venv", "venv", "__pycache__"}]
           for path in files:
-              try:
-                  py_compile.compile(str(path), doraise=True)
-              except py_compile.PyCompileError as exc:
-                  failures.append((path, str(exc)))
-          print(f"Compiled {len(files) - len(failures)} of {len(files)} Python files")
-          for path, error in failures:
-              print(f"FAIL: {path}: {error}", file=sys.stderr)
-          if failures:
-              raise SystemExit(1)
+              py_compile.compile(str(path), doraise=True)
+          print(f"Compiled {len(files)} Python files")
           PY
-
       - name: Run test suite
         run: python -m pytest -q
